@@ -6336,11 +6336,36 @@ class Series(base.IndexOpsMixin, NDFrame):  # type: ignore[misc]
     ):
         assert type(self.values) ==  np.ndarray
         eps = kwargs.get('eps')
+        clip = kwargs.get('clip')
+        lower_lim = clip[0]
+        uppper_lim = clip[1]
         kwargs.pop('eps')
+        kwargs.pop('clip')
         self.values.unset_sensitive()
         raw_val =  NDFrame.sum(self, axis, skipna, numeric_only, min_count, **kwargs)
-        noised_val = numpy.random.laplace(loc=raw_val, scale=eps)
-        return noised_val
+        noised_val = numpy.random.laplace(loc=raw_val, scale=(uppper_lim-lower_lim)/eps)
+        return max(lower_lim, min(noised_val, uppper_lim))
+
+    @doc(make_doc("laplace_mean", ndim=1))
+    def laplace_mean(
+        self,
+        axis: Axis | None = 0,
+        skipna: bool = True,
+        numeric_only: bool = False,
+        **kwargs,
+    ):
+        assert type(self.values) ==  np.ndarray
+        eps = kwargs.get('eps')
+        clip = kwargs.get('clip')
+        lower_lim = clip[0]
+        uppper_lim = clip[1]
+        kwargs.pop('eps')
+        kwargs.pop('clip')
+        self.values.unset_sensitive()
+        length = len(self.values)
+        raw_val =  NDFrame.mean(self, axis, skipna, numeric_only, **kwargs)
+        noised_val = numpy.random.laplace(loc=raw_val, scale=((uppper_lim-lower_lim)/length)/eps)
+        return max(lower_lim, min(noised_val, uppper_lim))
 
     @doc(make_doc("prod", ndim=1))
     def prod(
