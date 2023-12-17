@@ -10,7 +10,11 @@ from typing import (
     Any,
 )
 
-import numpy as np
+import os
+if os.environ.get("DP_NUMPY", "1") == "0":
+    import numpy as np
+else:
+    import dp_numpy as np
 from numpy import ma
 
 from pandas._config import using_pyarrow_string_dtype

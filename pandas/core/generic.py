@@ -25,6 +25,11 @@ from typing import (
 import warnings
 import weakref
 
+# import os
+# if os.environ.get("DP_NUMPY", "1") == "0":
+#     import numpy as np
+# else:
+#     import dp_numpy as np
 import numpy as np
 
 from pandas._config import (
