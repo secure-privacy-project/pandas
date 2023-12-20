@@ -24,7 +24,13 @@ from typing import (
 import warnings
 import weakref
 
-import numpy as np
+import os
+if os.environ.get("DP_NUMPY", "1") == "0":
+    import numpy as np
+else:
+    import dp_numpy as np
+
+import numpy
 
 from pandas._config import using_copy_on_write
 from pandas._config.config import _get_option
@@ -6293,6 +6299,48 @@ class Series(base.IndexOpsMixin, NDFrame):  # type: ignore[misc]
         **kwargs,
     ):
         return NDFrame.sum(self, axis, skipna, numeric_only, min_count, **kwargs)
+    
+    @doc(make_doc("laplace_sum", ndim=1))
+    def laplace_sum(
+        self,
+        axis: Axis | None = None,
+        skipna: bool = True,
+        numeric_only: bool = False,
+        min_count: int = 0,
+        **kwargs,
+    ):
+        assert type(self.values) ==  np.ndarray
+        eps = kwargs.get('eps')
+        clip = kwargs.get('clip')
+        lower_lim = clip[0]
+        uppper_lim = clip[1]
+        kwargs.pop('eps')
+        kwargs.pop('clip')
+        self.values.unset_sensitive()
+        raw_val =  NDFrame.sum(self, axis, skipna, numeric_only, min_count, **kwargs)
+        noised_val = numpy.random.laplace(loc=raw_val, scale=(uppper_lim-lower_lim)/eps)
+        return max(lower_lim, min(noised_val, uppper_lim))
+
+    @doc(make_doc("laplace_mean", ndim=1))
+    def laplace_mean(
+        self,
+        axis: Axis | None = 0,
+        skipna: bool = True,
+        numeric_only: bool = False,
+        **kwargs,
+    ):
+        assert type(self.values) ==  np.ndarray
+        eps = kwargs.get('eps')
+        clip = kwargs.get('clip')
+        lower_lim = clip[0]
+        uppper_lim = clip[1]
+        kwargs.pop('eps')
+        kwargs.pop('clip')
+        self.values.unset_sensitive()
+        length = len(self.values)
+        raw_val =  NDFrame.mean(self, axis, skipna, numeric_only, **kwargs)
+        noised_val = numpy.random.laplace(loc=raw_val, scale=((uppper_lim-lower_lim)/length)/eps)
+        return max(lower_lim, min(noised_val, uppper_lim))
 
     @doc(make_doc("prod", ndim=1))
     def prod(

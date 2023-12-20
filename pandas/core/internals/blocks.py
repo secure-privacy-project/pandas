@@ -13,7 +13,12 @@ from typing import (
 import warnings
 import weakref
 
-import numpy as np
+import os
+if os.environ.get("DP_NUMPY", "1") == "0":
+    import numpy as np
+else:
+    import dp_numpy as np
+import numpy as numpy
 
 from pandas._config import (
     get_option,
@@ -209,7 +214,7 @@ class Block(PandasObject, libinternals.Block):
         Can we store NA values in this Block?
         """
         dtype = self.dtype
-        if isinstance(dtype, np.dtype):
+        if isinstance(dtype, np.dtype) or isinstance(dtype, numpy.dtype):
             return dtype.kind not in "iub"
         return dtype._can_hold_na
 
